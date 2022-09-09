@@ -1,0 +1,100 @@
+/*  
+    CSS skeleton loading approach styles based off CSS tricks and react-loading-skeleton:
+        https://css-tricks.com/a-bare-bones-approach-to-versatile-and-reusable-skeleton-loaders/
+        https://github.com/dvtng/react-loading-skeleton/blob/master/src/skeleton.css
+
+    This approach applies skeleton styling based on the currently existing layout of a pattern/component, so all layout styles (dimensions, positioning) are preserved.
+    Loading states should be encapsulated in components/patterns themsleves; no need to create a separate skeleton for each component. 
+
+    Usage:
+        1.  Apply .skeleton-load to the desired element based on the data fetch state.
+        2.  Apply aria-hidden to the element based on the data fetch state.
+        3.  Add screen reader only loading text based on the data fetch state, ideally on the container which contains multiple .skeleton-load items.
+        4.  If applied to interactive elements (buttons/links/form elements), disable based on the data fetch state.
+*/
+
+.skeleton-load {
+    /* 1.57:1 (on white) does not meet WCAG non-text contrast of >= 3:1. May be an issue */
+    --base-color: var(--color-neutral-3);
+    --shimmer-color: var(--color-neutral-2);  
+
+    /* Hide content and apply basic background and border-color styles */
+    background: var(--base-color);                  /* [TEST] to see if this needs !important */
+    color: rgba(0, 0, 0, 0) !important;         
+    border-color: rgba(0, 0, 0, 0) !important;
+    border-radius: var(--border-radius-soft);       /*  makes skeletons less blocky if no border-radius is applied
+                                                        this may override equal specificity selectors. [TEST]  */
+    /* prevent text-selection */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    cursor: wait;
+
+    /* when applied to text, ensures the skeleton is not taller than the text, and is vertically centered */
+    line-height: 1;                                 
+    vertical-align: middle;     /* [TEST] */
+    
+    /* needed for animation */
+    position: relative;
+    overflow: hidden;
+    z-index: 1; 
+}
+
+/*  Additional dark color option which meets WCAG non-text contrast requirement of >= 3:1 (on white).
+    Skeleton loading may or may not consitutes a UI state per WCAG, but most skeleton loading examples are not >= 3:1 contrast.
+    This would have to be set as the default color for 508 compliance if the above is true.
+    https://www.w3.org/TR/WCAG21/#non-text-contrast 
+*/
+.skeleton-load.skeleton-load-dark {
+    --base-color: var(--color-neutral-6);
+    --shimmer-color: var(--color-neutral-5);  
+}
+
+/* Make sure all child elements are hidden, but preserve their dimensions and layout */
+.skeleton-load * {
+    visibility: hidden;
+}
+
+/*  Optional shimmer animataion */
+@media (prefers-reduced-motion: no-preference) {
+    .skeleton-load::after {
+        /* ensure ::after fills the container */
+        display: block;
+        content: "\00a0";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+
+        /* set background gradient shimmer */
+        background-repeat: no-repeat;
+        background-image: linear-gradient(
+            90deg,
+            var(--base-color),
+            var(--shimmer-color),
+            var(--base-color)
+        );
+
+        /* animation starts outside of the element, to the left */
+        transform: translateX(-100%);
+        animation: skeleton-animation 1.5s ease-in-out infinite;
+    }
+}
+
+@keyframes skeleton-animation {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+ /* overrides position: absolute above, as it is not needed if the element is empty */
+.skeleton-load:empty::after {
+    position: initial; 
+}
+
+/*  Make sure that an element has at least a whitespace character as a child so it displays properly. 
+    This is useful when no text placeholder is present (element is empty). */
+.skeleton-load *:empty::after {
+    content: "\00a0";
+}
